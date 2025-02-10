@@ -13,8 +13,8 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-/** @type {Map<string, { id: string, name: string, email: string }>} */
-const users = new Map();
+/** @type {Array<{ id: string, name: string, email: string }>} */
+const users = [];
 
 
 app.post('/users', (req, res) => {
@@ -23,13 +23,13 @@ app.post('/users', (req, res) => {
     if (!name || !email) return res.status(400).json({ error: "Bad Request" });
 
     const newUser = { id: crypto.randomUUID(), name, email };
-    users.set(newUser.id, newUser) ;
+    users.push(newUser) ;
 
     res.status(201).json(newUser);
 });
 
 app.get('/users/:id', (req, res) => {
-    let user = users.get(req.params.id);
+    const user = users.find(u => u.id === req.params.id);
 
     if (!user) return res.status(404).json({error: "Not Found"});
 
@@ -38,18 +38,20 @@ app.get('/users/:id', (req, res) => {
 
 app.put('/users/:id', (req, res) => {
     const {name, email} = req.body;
+    const userIndex = users.findIndex(u => u.id === req.params.id);
 
-    if (!users.has(req.params.id)) return res.status(404).json({error: "Not Found"});
+    if (userIndex === -1) return res.status(404).json({error: "Not Found"});
     if (!name || !email) return res.status(400).json({ error: "Bad Request" });
 
-    users.set(req.params.id, { id: req.params.id, name: name, email: email });
+    users[userIndex] = { id: req.params.id, name, email };
 
-    return res.status(200).json(users.get(req.params.id));
+    return res.status(200).json(users[userIndex]);
 });
 
 app.delete('/users/:id', (req, res) => {
-    if (!users.has(req.params.id)) return res.status(404).json({error: "Not Found"});
-    users.delete(req.params.id);
+    const userIndex = users.findIndex(u => u.id === req.params.id);
+    if (userIndex === -1) return res.status(404).json({error: "Not Found"});
+    users.splice(userIndex, 1);
     return res.status(204).send();
 });
 
